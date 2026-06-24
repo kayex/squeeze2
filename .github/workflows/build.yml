@@ -28,14 +28,26 @@ jobs:
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: cargo-${{ runner.os }}-
 
-      # vcpkg compiles FFmpeg from source the first time (~20-40 min). Its binary
-      # cache (%LOCALAPPDATA%\vcpkg\archives) makes later runs fast.
-      - name: Cache vcpkg binary archives
+      # Export the runner's vcpkg location into the env for later steps. NOTE:
+      # ${{ env.VCPKG_INSTALLATION_ROOT }} does NOT work — the env context only
+      # exposes workflow-defined vars, not runner-provided ones. Read it from the
+      # actual process env ($env:...) and forward via $GITHUB_ENV instead.
+      - name: Configure vcpkg env
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\vcpkg_cache" | Out-Null
+          Add-Content $env:GITHUB_ENV "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT"
+          Add-Content $env:GITHUB_ENV "VCPKGRS_TRIPLET=$env:VCPKG_TRIPLET"
+          Add-Content $env:GITHUB_ENV "VCPKG_DEFAULT_BINARY_CACHE=$env:GITHUB_WORKSPACE\vcpkg_cache"
+
+      # vcpkg compiles FFmpeg from source the first time (~20-40 min); the binary
+      # cache (explicit dir above) makes later runs minutes.
+      - name: Cache vcpkg binaries
         uses: actions/cache@v4
         with:
-          path: ~/AppData/Local/vcpkg/archives
-          key: vcpkg-${{ env.VCPKG_TRIPLET }}-ffmpeg8-v1
-          restore-keys: vcpkg-${{ env.VCPKG_TRIPLET }}-
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-${{ env.VCPKG_TRIPLET }}-ffmpeg8-v2
+          restore-keys: vcpkg-${{ env.VCPKG_TRIPLET }}-ffmpeg8-
 
       - name: Install FFmpeg (static, LGPL-only, NVENC) via vcpkg
         shell: pwsh
@@ -46,9 +58,6 @@ jobs:
 
       - name: Build squeeze.exe (release, static FFmpeg)
         shell: pwsh
-        env:
-          VCPKG_ROOT: ${{ env.VCPKG_INSTALLATION_ROOT }}
-          VCPKGRS_TRIPLET: x64-windows-static-md
         run: cargo build -p cli --release --features vcpkg
 
       - name: Stage artifact
