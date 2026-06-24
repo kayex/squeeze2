@@ -1,0 +1,22 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Headless CLI for the squeeze2 Phase-0 encode spike."
+
+[[bin]]
+name = "squeeze"
+path = "src/main.rs"
+
+[dependencies]
+engine = { path = "../engine" }
+anyhow = "1"
+
+[features]
+default = []
+# Forwards to engine/vcpkg. Build with: cargo build -p cli --features vcpkg
+vcpkg = ["engine/vcpkg"]
+# Forwards to engine/system (macOS/Linux dev via pkg-config).
+system = ["engine/system"]

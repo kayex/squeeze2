@@ -1,0 +1,21 @@
+[package]
+name = "engine"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Size-targeted H.264 video compression engine (in-process libav* / NVENC), no ffmpeg.exe."
+
+[dependencies]
+# rsmpeg 0.18 links FFmpeg's libav* IN-PROCESS (no shelled-out ffmpeg.exe).
+# default-features=false + ffmpeg8 pins the FFmpeg 8.x ABI.
+rsmpeg = { version = "0.18", default-features = false, features = ["ffmpeg8"] }
+anyhow = "1"
+
+[features]
+default = []
+# Link FFmpeg through vcpkg (set VCPKG_ROOT). Omit to use FFMPEG_INCLUDE_DIR /
+# FFMPEG_DLL_PATH / FFMPEG_LIBS_DIR env vars instead (e.g. a BtbN prebuilt).
+vcpkg = ["rsmpeg/link_vcpkg_ffmpeg"]
+# Link the system FFmpeg via pkg-config (macOS/Linux dev). No NVENC on macOS.
+system = ["rsmpeg/link_system_ffmpeg"]
