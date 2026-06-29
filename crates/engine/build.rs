@@ -18,8 +18,10 @@ fn main() {
     // omitting a needed one is a link error — so err toward completeness.
     const SYS_LIBS: &[&str] = &[
         "bcrypt",   // crypto primitives
+        "ncrypt",   // CNG key storage — avformat schannel TLS (tls_schannel.o)
         "secur32",  // SSPI
         "crypt32",  // cert store
+        "advapi32", // registry / legacy crypto
         "ws2_32",   // sockets
         "user32",
         "gdi32",
